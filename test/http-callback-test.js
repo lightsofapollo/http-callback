@@ -114,6 +114,7 @@ describe('http calback', function() {
 
         subject.on('callback', function() {
           expect(subject.running).to.be(false);
+          expect(calledWith.method).to.be('POST');
           expect(calledWith.query.magic).to.eql(1);
           expect(calledWith.headers['x-magic']).to.equal('true');
           expect(calledWith.body).to.equal('zomg');

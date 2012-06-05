@@ -78,6 +78,7 @@ Server.prototype = {
         self.emit('callback', {
           body: buffer,
           query: urlData.query,
+          method: req.method,
           host: urlData.host,
           headers: req.headers
         });
