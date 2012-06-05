@@ -1,6 +1,6 @@
 {
   "name": "http-callback",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "James Lal (james@lightsofapollo.com)",
   "description": "Create unique http endpoints for remote callbacks.",
   "main": "lib/http-callback.js",
