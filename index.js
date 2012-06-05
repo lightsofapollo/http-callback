@@ -112,7 +112,7 @@ function getPublicIp(callback) {
  */
 function create(options, cb) {
   //generate uuid
-  var pending = 2,
+  var pending = 1,
       error,
       server;
 
@@ -142,15 +142,18 @@ function create(options, cb) {
     cb(null, server);
   }
 
-  //find ip
-  getPublicIp(function(err, pubIp) {
-    if (err) {
-      error = err;
-      return next();
-    }
-    options.ip = pubIp;
-    next();
-  });
+  if (!options.ip) {
+    pending++;
+    //find ip
+    getPublicIp(function(err, pubIp) {
+      if (err) {
+        error = err;
+        return next();
+      }
+      options.ip = pubIp;
+      next();
+    });
+  }
 
 
   //find port

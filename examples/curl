@@ -2,8 +2,8 @@
 
 var callback = require('../');
 
-callback(function(err, server) {
-  console.log('TRY: curl', server.url.replace(server.ip, 'localhost'));
+callback({ip: '127.0.0.1'}, function(err, server) {
+  console.log('TRY: curl', server.url);
 
   server.on('callback', function(data) {
     console.dir(data);
