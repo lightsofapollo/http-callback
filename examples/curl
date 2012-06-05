@@ -1,0 +1,11 @@
+#! /usr/bin/env node
+
+var callback = require('../');
+
+callback(function(err, server) {
+  console.log('TRY: curl', server.url.replace(server.ip, 'localhost'));
+
+  server.on('callback', function(data) {
+    console.dir(data);
+  });
+})
