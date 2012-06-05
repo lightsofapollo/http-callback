@@ -28,11 +28,34 @@ Server.prototype = {
 
   __proto__: EventEmitter.prototype,
 
+  timeout: null,
+
+  timeoutId: null,
+
   run: function() {
+    if (this.timeout && this.timeout !== 0) {
+      this._timeoutId = setTimeout(
+        this.onTimeout.bind(this), this.timeout
+      );
+    }
+
     this.httpServer = new http.Server();
     this.running = true;
     this.httpServer.on('request', this.onRequest.bind(this));
     this.httpServer.listen(this.port);
+  },
+
+  onTimeout: function() {
+    var err;
+
+    this.running = false;
+    this.httpServer.close();
+
+    err = new Error(
+      'callback has timed out after ' + this.timeout
+    );
+
+    this.emit('error', err);
   },
 
   onRequest: function(req, res) {
@@ -40,21 +63,24 @@ Server.prototype = {
         buffer = '', self = this;
 
     if (urlData.query.TOKEN == this.id) {
+      clearTimeout(self._timeoutId);
+
       req.on('data', function(data) {
         buffer += data.toString();
       });
 
       req.on('end', function() {
+        res.writeHead(200);
+        res.end();
+        self.running = false;
+        self.httpServer.close();
+
         self.emit('callback', {
           body: buffer,
           query: urlData.query,
           host: urlData.host,
           headers: req.headers
         });
-        res.writeHead(200);
-        res.end();
-        self.running = false;
-        self.httpServer.close();
       });
     } else {
       res.writeHead(500);
@@ -83,14 +109,22 @@ function getPublicIp(callback) {
  * Generates a uuid for the TOKEN id,
  * finds an open port for the http server
  */
-function create(cb) {
+function create(options, cb) {
   //generate uuid
-  var id = uuid.v4(),
-      ip,
-      port,
-      server,
-      pending = 2,
-      error;
+  var pending = 2,
+      error,
+      server;
+
+  if (typeof(options) === 'undefined') {
+    options = {};
+  }
+
+  if (typeof(options) === 'function') {
+    cb = options;
+    options = {};
+  }
+
+  options.id = uuid.v4();
 
   function next() {
     pending--;
@@ -102,12 +136,7 @@ function create(cb) {
       return cb(error);
     }
 
-    server = new Server({
-      ip: ip,
-      id: id,
-      port: port
-    });
-
+    server = new Server(options);
     server.run();
     cb(null, server);
   }
@@ -118,7 +147,7 @@ function create(cb) {
       error = err;
       return next();
     }
-    ip = pubIp;
+    options.ip = pubIp;
     next();
   });
 
@@ -132,7 +161,7 @@ function create(cb) {
       error = err;
       return next();
     }
-    port = availablePort;
+    options.port = availablePort;
     next();
   });
 }
